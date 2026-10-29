@@ -1,0 +1,7 @@
+{
+  "name": "codekshetra-invitations",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Three animated CODEKSHETRA invitations. No installation or build needed.",
+  "scripts": { "check": "node --check dist/app.js && node --check dist/collection.js" }
+}
