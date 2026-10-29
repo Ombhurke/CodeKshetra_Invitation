@@ -3,8 +3,20 @@
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => [...document.querySelectorAll(selector)];
   const STORE = 'codekshetra.invitation.v1';
+  // Verified against SVPCET's About Us directory and September 2026 SWAGATAM report.
+  const guestRoles = [
+    'Director, SVPCET', 'Financial Administrator, SVPCET', 'Management Member',
+    'HoD – Computer Science & Engineering', 'HoD – Information Technology',
+    'HoD – Mechanical Engineering', 'HoD – Electronics & Telecommunication Engineering',
+    'HoD – Electrical Engineering', 'HoD – Civil Engineering', 'HoD – Artificial Intelligence',
+    'HoD – Robotics & Artificial Intelligence', 'HoD – Computer Science & Engineering (Data Science)',
+    'HoD – Computer Science & Engineering (Cyber Security)', 'HoD – Computer Science & Business Systems',
+    'HoD – Industrial Internet of Things (IIoT)', 'Principal, SVPCET',
+    'Head – Administration Department; Coordinator – Incubation & Entrepreneurship Development',
+  ];
   const invitedGuests = ['Fr. Paul Chandrankunnel', 'Fr. Siju Jose', 'Fr. Stanley Wilson', 'Dr. Manoj Bramhe', 'Dr. Shabana Pathan', 'Dr. Sushant Satputaley', 'Dr. Harish Rajurkar', 'Dr. Jyoti Rothe', 'Dr. Abhay Hirekhan', 'Dr. Vikas Bhowate', 'Dr. Amit Bhende', 'Dr. Manish Gudadhe', 'Dr. Abhishek Pathak', 'Dr. Pravin Sen', 'Dr. Shriraghavan Madhubushi', 'Dr. Prashant Maheshwary', 'Dr. Homeshwar Nagpure'].map((name, i) => ({ id: `invited-${i + 1}`, name, role: '' }));
   const DEFAULT_MESSAGE = 'Your esteemed presence would be an honour and a great source of encouragement for all the participants.';
+  invitedGuests.forEach((guest, index) => { guest.role = guestRoles[index]; });
   const defaults = () => ({
     guestId: invitedGuests[0].id,
     guests: invitedGuests.map(g => ({ ...g })),
@@ -24,7 +36,10 @@
       for (const key of ['date', 'time', 'venue']) if (!data.event[key]) data.event[key] = fallback.event[key];
       if (data.event.message.startsWith('Your presence would make this occasion')) data.event.message = DEFAULT_MESSAGE;
       for (const guest of invitedGuests) {
-        if (!data.guests.some(g => g.id === guest.id || g.name.trim().toLowerCase() === guest.name.toLowerCase())) data.guests.push({ ...guest });
+        const existing = data.guests.find(g => g.name.trim().replace(/\s+/g, ' ').toLowerCase() === guest.name.toLowerCase());
+        if (existing) {
+          if (!existing.role.trim()) existing.role = guest.role;
+        } else if (!data.guests.some(g => g.id === guest.id)) data.guests.push({ ...guest });
       }
       data.signatures = data.signatures && typeof data.signatures === 'object' && !Array.isArray(data.signatures) ? data.signatures : {};
       if (!data.guests.some(g => g.id === data.guestId)) data.guestId = data.guests[0].id;
@@ -181,10 +196,17 @@
     select.replaceChildren();
     data.guests.forEach(guest => {
       const option = document.createElement('option');
-      option.value = guest.id; option.textContent = guest.name; select.append(option);
+      option.value = guest.id; option.textContent = `${guest.name}${guest.role ? ' · ' + guest.role : ''}`; select.append(option);
     });
     const add = document.createElement('option'); add.value = '__new__'; add.textContent = '+ Add a guest manually'; select.append(add);
     select.value = data.guestId;
+    let description = $('#opening-guest-role');
+    if (!description) {
+      description = document.createElement('p'); description.id = 'opening-guest-role';
+      description.className = 'selected-guest-role'; description.setAttribute('aria-live', 'polite');
+      select.after(description); select.setAttribute('aria-describedby', description.id);
+    }
+    description.textContent = currentGuest().role;
   }
   $('#opening-guest-select').addEventListener('change', event => {
     const id = event.target.value;
