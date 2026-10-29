@@ -1,4 +1,6 @@
-# CODEKSHETRA — Three Invitations
+# CODEKSHETRA — Aurora Invitation
+
+Current design: Aurora Night only. Open `dist/index.html` (or `dist/aurora.html`). The opening screen includes the supplied 17-person guest dropdown and manual guest entry. Editing is available before opening the ribbon. The former Monochrome and Pearl pages have been removed; their original versions remain in Git history.
 
 Three complete frontend invitation experiences:
 

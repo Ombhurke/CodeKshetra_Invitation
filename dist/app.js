@@ -3,14 +3,11 @@
   const $ = (selector) => document.querySelector(selector);
   const $$ = (selector) => [...document.querySelectorAll(selector)];
   const STORE = 'codekshetra.invitation.v1';
+  const invitedGuests = ['Fr. Paul Chandrankunnel', 'Fr. Siju Jose', 'Fr. Stanley Wilson', 'Dr. Manoj Bramhe', 'Dr. Shabana Pathan', 'Dr. Sushant Satputaley', 'Dr. Harish Rajurkar', 'Dr. Jyoti Rothe', 'Dr. Abhay Hirekhan', 'Dr. Vikas Bhowate', 'Dr. Amit Bhende', 'Dr. Manish Gudadhe', 'Dr. Abhishek Pathak', 'Dr. Pravin Sen', 'Dr. Shriraghavan Madhubushi', 'Dr. Prashant Maheshwary', 'Dr. Homeshwar Nagpure'].map((name, i) => ({ id: `invited-${i + 1}`, name, role: '' }));
   const DEFAULT_MESSAGE = 'Your esteemed presence would be an honour and a great source of encouragement for all the participants.';
   const defaults = () => ({
-    guestId: 'welcome',
-    guests: [
-      { id: 'welcome', name: 'Respected Sir/Madam', role: 'Our honoured guest' },
-      { id: 'chief', name: 'Our chief guest', role: 'Chief guest' },
-      { id: 'management', name: 'Our management member', role: 'Management' },
-    ],
+    guestId: invitedGuests[0].id,
+    guests: invitedGuests.map(g => ({ ...g })),
     event: { date: '31st October 2026', time: '1:15 PM', venue: '2nd floor auditorium, B Block, St. Vincent Pallotti College of Engineering & Technology, Nagpur', message: DEFAULT_MESSAGE }, signatures: {},
   });
   let storageAvailable = true;
@@ -26,7 +23,9 @@
       data.event = Object.fromEntries(Object.keys(fallback.event).map(k => [k, typeof data.event?.[k] === 'string' ? data.event[k] : fallback.event[k]]));
       for (const key of ['date', 'time', 'venue']) if (!data.event[key]) data.event[key] = fallback.event[key];
       if (data.event.message.startsWith('Your presence would make this occasion')) data.event.message = DEFAULT_MESSAGE;
-      if (data.guests[0]?.id === 'welcome' && data.guests[0].name === 'Our distinguished guest') data.guests[0] = fallback.guests[0];
+      for (const guest of invitedGuests) {
+        if (!data.guests.some(g => g.id === guest.id || g.name.trim().toLowerCase() === guest.name.toLowerCase())) data.guests.push({ ...guest });
+      }
       data.signatures = data.signatures && typeof data.signatures === 'object' && !Array.isArray(data.signatures) ? data.signatures : {};
       if (!data.guests.some(g => g.id === data.guestId)) data.guestId = data.guests[0].id;
       return data;
@@ -80,15 +79,18 @@
       const field = el.dataset.event;
       el.textContent = data.event[field] || (field === 'message' ? DEFAULT_MESSAGE : 'To be announced');
     });
-    document.title = `CODEKSHETRA — ${guest.name}`;
+    document.title = 'CODEKSHETRA 2026 — Your invitation';
+    populateOpeningSelect();
   }
 
   // One controlled transition: cut, separate ribbon halves, unfold, reveal.
   function finishOpening() {
+    $('#guest-setup').hidden = true;
     timers.forEach(clearTimeout); timers.length = 0;
     gate.hidden = true; gate.classList.remove('opening', 'departing');
     invitation.hidden = false; invitation.inert = false;
     opened = true; opening = false;
+    $('#organizer-trigger').hidden = true;
     window.scrollTo({ top: 0, behavior: 'instant' });
     if (location.hash !== '#invitation') history.replaceState(null, '', '#invitation');
     $('.skip-link').href = '#signature';
@@ -103,14 +105,17 @@
     opening = true;
     $('#open-invitation').disabled = true;
     gate.classList.add('opening');
-    timers.push(setTimeout(() => gate.classList.add('departing'), 1300));
-    timers.push(setTimeout(finishOpening, 1740));
+    timers.push(setTimeout(() => gate.classList.add('departing'), 1800));
+    timers.push(setTimeout(finishOpening, 2400));
   }
   function replay() {
     timers.forEach(clearTimeout); timers.length = 0;
     opening = false; opened = false;
+    $('#organizer-trigger').hidden = true;
+    $('#guest-setup').hidden = true;
     invitation.hidden = true; invitation.inert = true;
     gate.hidden = false; gate.classList.remove('opening', 'departing');
+    gate.inert = false;
     $('#open-invitation').disabled = false;
     $('.skip-link').href = '#open-invitation';
     $('.skip-link').textContent = 'Skip to invitation';
@@ -123,6 +128,17 @@
   $('#open-invitation').addEventListener('click', () => openInvitation());
   $('#skip-animation').addEventListener('click', () => openInvitation(true));
   $('#replay').addEventListener('click', replay);
+  $('#prepare-invitation').addEventListener('click', () => {
+    replay();
+    if (!reduced.matches) gate.animate([{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: 700, easing: 'cubic-bezier(.22,1,.36,1)' });
+  });
+  function showGuestSetup() {
+    replay(); gate.hidden = true; gate.inert = true;
+    $('#guest-setup').hidden = false; $('#organizer-trigger').hidden = false;
+    $('.skip-link').href = '#opening-guest-select'; $('.skip-link').textContent = 'Skip to guest selection';
+    $('#opening-guest-select').focus({ preventScroll: true });
+  }
+  $('#change-guest').addEventListener('click', showGuestSetup);
 
   let observer;
   function observeReveals() {
@@ -160,6 +176,26 @@
     const add = document.createElement('option'); add.value = '__new__'; add.textContent = '+ Add another guest'; select.append(add);
     select.value = data.guestId;
   }
+  function populateOpeningSelect() {
+    const select = $('#opening-guest-select');
+    select.replaceChildren();
+    data.guests.forEach(guest => {
+      const option = document.createElement('option');
+      option.value = guest.id; option.textContent = guest.name; select.append(option);
+    });
+    const add = document.createElement('option'); add.value = '__new__'; add.textContent = '+ Add a guest manually'; select.append(add);
+    select.value = data.guestId;
+  }
+  $('#opening-guest-select').addEventListener('change', event => {
+    const id = event.target.value;
+    if (id === '__new__') {
+      showSettings(); $('#guest-select').value = '__new__'; fillGuestFields();
+      event.target.value = data.guestId; $('#guest-name').focus(); return;
+    }
+    saveDraft(); data.guestId = id; personalize(); loadGuestSignature();
+    if (!persist()) toast('Guest selected for this visit. Browser storage is unavailable.');
+  });
+  $('#opening-edit').addEventListener('click', showSettings);
   function fillGuestFields() {
     const guest = data.guests.find(g => g.id === $('#guest-select').value);
     $('#guest-name').value = guest?.name || '';
@@ -204,7 +240,7 @@
   $('#guest-select').addEventListener('change', () => { fillGuestFields(); if ($('#guest-select').value === '__new__') $('#guest-name').focus(); });
   $('#organizer-form').addEventListener('submit', event => { event.preventDefault(); applySettings(true); });
   $('#apply-settings').addEventListener('click', () => applySettings(false));
-  $('#next-guest').addEventListener('click', () => { closeSignature(); showSettings(); });
+  $('#next-guest').addEventListener('click', () => { closeSignature(); showGuestSetup(); });
 
   // Normalized points survive resize/orientation changes without losing strokes.
   function hasSignature() { return strokes.length > 0 || typed.length > 0; }
@@ -329,8 +365,13 @@
   }
   $('#save-signature').addEventListener('click', () => {
     if (!hasSignature()) return;
+    renderSignature();
+    const exactSignature = document.createElement('canvas');
+    exactSignature.width = canvas.width; exactSignature.height = canvas.height;
+    exactSignature.getContext('2d').drawImage(canvas, 0, 0);
     const previous = data.signatures[data.guestId];
-    data.signatures[data.guestId] = { strokes: cloneStrokes(strokes), typed, savedAt: new Date().toISOString() };
+    data.signatures[data.guestId] = { strokes: cloneStrokes(strokes), typed, savedAt: new Date().toISOString(), image: exactSignature.toDataURL('image/png'), guest: { ...currentGuest() }, event: { ...data.event } };
+    downloadInvitation(exactSignature);
     if (persist()) {
       saved = true; dirty = false; drafts.delete(data.guestId);
       restoreSavedMessage();
@@ -348,6 +389,7 @@
   const signatureDialog = $('#signature-dialog');
   let capturing = false;
   function signatureImage(record) {
+    if (record.image) return record.image;
     const image = document.createElement('canvas'); image.width = 1200; image.height = 500;
     paintSignature(image.getContext('2d'), image.width, image.height, validStrokes(record.strokes), record.typed || '', false);
     return image.toDataURL('image/png');
@@ -396,7 +438,7 @@
       snapshot.remove(); updateSignaturePreview(); capturing = false; area.inert = false;
       $('#close-signature').disabled = false;
       if (!reduced.matches) $('#signature').animate([{ boxShadow: '0 0 0 5px var(--line)' }, { boxShadow: '0 0 0 0 transparent' }], { duration: 550 });
-      toast('Your signature is in place. Saved on this device.');
+      toast('Signature saved. Your named invitation download has been requested.');
     }
   }
 
@@ -408,10 +450,18 @@
   function downloadCanvas(imageCanvas, filename) {
     imageCanvas.toBlob(blob => { if (blob) downloadBlob(blob, filename); else setSignatureStatus('Download could not be prepared. Please try again.', true); }, 'image/png');
   }
-  $('#download-signature').addEventListener('click', () => {
-    const out = document.createElement('canvas'); out.width = 1400; out.height = 600;
-    paintSignature(out.getContext('2d'), out.width, out.height, strokes, typed);
-    downloadCanvas(out, `codekshetra-${safeName(currentGuest().name)}-signature.png`);
+  $('#download-signature').addEventListener('click', async () => {
+    const record = data.signatures[data.guestId];
+    const guestName = record?.guest?.name || currentGuest().name;
+    if (record?.image && saved && !dirty) {
+      const image = new Image(); image.src = record.image;
+      try {
+        await image.decode();
+        const out = document.createElement('canvas'); out.width = image.naturalWidth; out.height = image.naturalHeight;
+        out.getContext('2d').drawImage(image, 0, 0);
+        downloadCanvas(out, `codekshetra-${safeName(guestName)}-signature.png`);
+      } catch { setSignatureStatus('Could not read the saved signature. Please try again.', true); }
+    } else { renderSignature(); downloadCanvas(canvas, `codekshetra-${safeName(currentGuest().name)}-signature.png`); }
   });
   function wrappedText(ctx, text, x, y, width, lineHeight) {
     let line = '';
@@ -423,7 +473,19 @@
     if (line) { ctx.fillText(line, x, y); y += lineHeight; }
     return y;
   }
-  $('#download-invitation').addEventListener('click', () => {
+  $('#download-invitation').addEventListener('click', async () => {
+    const record = data.signatures[data.guestId];
+    if (record?.image && saved && !dirty) {
+      const image = new Image(); image.src = record.image;
+      try { await image.decode(); downloadInvitation(image, record); }
+      catch { setSignatureStatus('Could not read the saved signature. Please try again.', true); }
+    } else {
+      renderSignature(); downloadInvitation(canvas);
+    }
+  });
+  function downloadInvitation(signatureSource, record = null) {
+    const guest = record?.guest || { ...currentGuest() };
+    const eventDetails = record?.event || { ...data.event };
     // A self-contained keepsake export, without any server or image dependencies.
     const out = document.createElement('canvas'); out.width = 1200; out.height = 1900;
     const ctx = out.getContext('2d'), theme = document.body.dataset.theme;
@@ -435,19 +497,18 @@
     ctx.font = '18px Arial'; ctx.fillText('A PERSONAL INVITATION', 600, 125);
     ctx.font = '66px Georgia'; ctx.fillText('CODEKSHETRA 2026', 600, 235);
     ctx.font = 'italic 32px Georgia'; ctx.fillText('Inauguration Ceremony', 600, 330);
-    const guest = currentGuest();
     let nameSize = 46; ctx.font = `${nameSize}px Georgia`;
     while (ctx.measureText(guest.name).width > 960 && nameSize > 16) { nameSize--; ctx.font = `${nameSize}px Georgia`; }
     ctx.fillText(guest.name, 600, 440);
     ctx.font = '22px Arial'; ctx.fillText(guest.role, 600, 490, 960);
     ctx.textAlign = 'left'; ctx.font = '26px Georgia';
     let y = wrappedText(ctx, 'The Rotaract Club of SVPCET, under the Student Affairs & Development Cell (SADC), cordially invites you to the inauguration ceremony of CODEKSHETRA 2026 — Enter the Kshetra. Solve the Impossible. A National-Level 24-Hour Hackathon.', 120, 600, 960, 43);
-    y = wrappedText(ctx, data.event.message || DEFAULT_MESSAGE, 120, y + 30, 960, 43);
+    y = wrappedText(ctx, eventDetails.message || DEFAULT_MESSAGE, 120, y + 30, 960, 43);
     // Event fields occupy fixed positions and long values wrap safely.
     y = Math.max(1000, y + 35);
     ['date','time','venue'].forEach(key => {
       ctx.font = '16px Arial'; ctx.fillText(key.toUpperCase(), 120, y);
-      ctx.font = '26px Georgia'; y = wrappedText(ctx, data.event[key] || 'To be announced', 120, y + 38, 960, 34) + 25;
+      ctx.font = '26px Georgia'; y = wrappedText(ctx, eventDetails[key] || 'To be announced', 120, y + 38, 960, 34) + 25;
     });
     // Grow a long-content export rather than clipping its signature.
     if (y > 1330) {
@@ -455,14 +516,15 @@
       const large = resized.getContext('2d'); large.fillStyle = bg; large.fillRect(0,0,resized.width,resized.height);
       large.drawImage(out,0,0); large.fillStyle = bg; large.fillRect(0,1800,1200,resized.height-1800);
       large.strokeStyle = ctx.strokeStyle; large.strokeRect(50,50,1100,resized.height-100);
-      addExportSignature(large, y + 30, ink); downloadCanvas(resized, `codekshetra-${safeName(guest.name)}-invitation.png`); return;
+      addExportSignature(large, y + 30, ink, signatureSource); downloadCanvas(resized, `codekshetra-${safeName(guest.name)}-invitation.png`); return;
     }
-    addExportSignature(ctx, 1390, ink); downloadCanvas(out, `codekshetra-${safeName(guest.name)}-invitation.png`);
-  });
-  function addExportSignature(ctx, y, ink) {
-    const sig = document.createElement('canvas'); sig.width = 960; sig.height = 280;
-    paintSignature(sig.getContext('2d'), sig.width, sig.height, strokes, typed);
-    ctx.drawImage(sig, 120, y);
+    addExportSignature(ctx, 1390, ink, signatureSource); downloadCanvas(out, `codekshetra-${safeName(guest.name)}-invitation.png`);
+  }
+  function addExportSignature(ctx, y, ink, sig) {
+    // Uniform scaling preserves the actual signature, regardless of tablet orientation.
+    const width = sig.naturalWidth || sig.width, height = sig.naturalHeight || sig.height;
+    const scale = Math.min(960 / width, 280 / height);
+    ctx.drawImage(sig, 120 + (960 - width * scale) / 2, y + (280 - height * scale) / 2, width * scale, height * scale);
     ctx.fillStyle = ink; ctx.textAlign = 'center'; ctx.font = '14px Arial';
     ctx.fillText('A MARK TO REMEMBER · CODEKSHETRA', 600, y + 325);
     ctx.font = 'italic 24px Georgia'; ctx.fillText('Warm Regards, Organizing Committee · Rotaract Club of SVPCET', 600, y + 390);
@@ -474,6 +536,7 @@
     if ((dirty && hasSignature()) || pendingDraft) { event.preventDefault(); event.returnValue = ''; }
   });
   personalize(); loadGuestSignature();
+  $('.skip-link').href = '#opening-guest-select'; $('.skip-link').textContent = 'Skip to guest selection';
   if (!storageAvailable) toast('Browser storage is unavailable. You can still download your signature.');
   if (location.hash === '#invitation' || location.hash === '#signature') {
     const goToSignature = location.hash === '#signature'; finishOpening();

@@ -1,5 +1,7 @@
 # Project context
 
+Latest decision: Aurora Night is the sole selected design. Home page opens its ribbon screen directly. Guest selection and guest/event editing belong on that opening screen; the opened invitation hides the header editor. The provided 17 names are seeded into the dropdown with manual additions supported. Main and secondary text brightness was increased slightly. This supersedes earlier requirements to preserve all three themes.
+
 Owner: Om Bhurke. Event: CODEKSHETRA. This is a digital invitation and grand guest welcome for college management.
 
 The senior's brief: a first screen with a ribbon and OPEN; opening reveals personalized invitation content; a white signature board below allows management to sign; a management-name dropdown selects the invitee and personalizes the invitation.

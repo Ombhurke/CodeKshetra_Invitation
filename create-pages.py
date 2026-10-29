@@ -11,6 +11,7 @@ themes = {
  'aurora': {'name':'Aurora Night','num':'09','top':'An invitation to what comes next.','title':'A new light.<em>A new idea.</em>','desc':'Step into a celebration of the people and possibilities that move us forward.','type':'LIGHT / COLOUR / POSSIBILITY','quote':'A spark of curiosity.<br><em>A universe of possibilities.</em>'},
  'pearl': {'name':'Pearl Glass','num':'06','top':'An occasion, beautifully unfolded.','title':'A warm welcome.<em>A bright beginning.</em>','desc':'A thoughtful invitation to share in something extraordinary.','type':'GLASS / LIGHT / WELCOME','quote':'Every new possibility starts<br><em>with a shared moment.</em>'},
 }
+themes = {'aurora': themes['aurora']}
 for key,t in themes.items():
     ribbon = ''.join(f'<div class="ribbon-half {side}"><div class="ribbon-band"></div><div class="ribbon-tail"></div>{bow.replace("ID",side)}</div>' for side in ['left','right'])
     details = ''.join(f'''<div class="event-detail"><div class="detail-label"><svg viewBox="0 0 24 24" aria-hidden="true">{icons[icon]}</svg>{label}</div><div class="event-value" data-event="{field}">To be announced</div><div class="event-sub">{sub}</div></div>''' for icon,label,field,sub in [('calendar','The date','date',''),('clock','The time','time',''),('pin','The venue','venue','')])
@@ -19,19 +20,19 @@ for key,t in themes.items():
 <body data-theme="{key}">
 <div class="ambient" aria-hidden="true"></div><div class="page-progress" aria-hidden="true"></div>
 <a class="skip-link" href="#open-invitation">Skip to invitation</a>
-<header class="site-header"><a class="brand" href="index.html" aria-label="CODEKSHETRA design collection"><span class="brand-icon" aria-hidden="true">‹›</span>CODEKSHETRA</a><nav class="header-actions" aria-label="Invitation controls"><a href="index.html" class="theme-link">Three expressions</a><button class="text-button" id="organizer-trigger" aria-haspopup="dialog">Guest settings</button></nav><div class="header-line"></div></header>
-<section class="gate" aria-label="Sealed invitation">
- <div class="gate-copy"><span class="eyebrow">A personal invitation</span><h1>{t['title']}</h1><p>{t['desc']}</p></div>
- <div class="gate-side"><span class="eyebrow">{t['name']}</span><div class="edition-number">{t['num']}</div><span class="eyebrow" style="font-size:8px">{t['top']}</span></div>
+<header class="site-header"><a class="brand" href="index.html" aria-label="CODEKSHETRA invitation"><span class="brand-icon" aria-hidden="true">‹›</span>CODEKSHETRA</a><nav class="header-actions" aria-label="Invitation controls"><button class="text-button" id="organizer-trigger" aria-haspopup="dialog">Edit guest &amp; event</button></nav><div class="header-line"></div></header>
+<section class="guest-setup" id="guest-setup" aria-labelledby="setup-title"><div class="setup-card"><span class="eyebrow">CODEKSHETRA 2026</span><h1 id="setup-title">A personal welcome.</h1><p>Select your guest, then prepare their sealed invitation.</p><div class="opening-guest"><label for="opening-guest-select">Invite a guest</label><select id="opening-guest-select" aria-label="Invite a guest"></select><button class="text-button" id="opening-edit" aria-haspopup="dialog">Add guest or edit details</button></div><button class="primary-button" id="prepare-invitation">Next <span aria-hidden="true">→</span></button></div></section>
+<section class="gate" aria-label="Sealed invitation" hidden inert>
+ <div class="gate-copy"><span class="eyebrow">A personal invitation</span><h1>A moment<br><em>awaits.</em></h1><p>Tap the seal to cut the ribbon.</p></div>
  <div class="folio-wrap"><div class="folio-shadow"></div><div class="folio">
   <div class="folio-inner"><span class="eyebrow">You're invited</span><span class="folio-monogram">CK</span><span class="folio-small">CODEKSHETRA</span></div>
   <div class="folio-door left"></div><div class="folio-door right"></div>
   <div class="folio-label"><span class="eyebrow">You are cordially invited</span><h2>CODEKSHETRA</h2></div>
-  <div class="folio-foot"><p>Reserved for <span data-guest-short>our distinguished guest</span></p><span>WITH OUR WARMEST REGARDS</span></div>
+  <div class="folio-foot"><p>A celebration of possibility.</p><span>WITH OUR WARMEST REGARDS</span></div>
   <div class="ribbon" aria-hidden="true">{ribbon}</div><div class="cut-beam" aria-hidden="true"></div>
   <button class="open-seal" id="open-invitation" aria-label="Split the ribbon and open your invitation"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="m8 8 13 13M8 16 21 3m-9 9 2 2"/></svg><span>OPEN</span></button>
  </div></div>
- <div class="vertical-note">{t['type']}</div>
+ <button class="text-button change-guest" id="change-guest">← Change guest</button>
  <div class="gate-bottom"><div>CODEKSHETRA<br>A celebration of ideas & innovation</div><div class="center-note"><span class="mouse-mark" aria-hidden="true"></span>Tap the seal. Let the moment unfold.</div><button class="skip-open" id="skip-animation">Open without animation ↗</button></div>
 </section>
 <main class="invitation-page" id="invitation" hidden inert tabindex="-1">
@@ -53,7 +54,7 @@ for key,t in themes.items():
    <div class="saved-panel" id="saved-panel" hidden><h3>A moment, remembered.</h3><p>Thank you, <span data-guest-name>our distinguished guest</span>. Your signature has been saved on this device.</p><div class="saved-actions"><button id="download-signature">Download signature ↓</button><button id="download-invitation">Download signed invitation ↓</button><button id="next-guest">Next guest ↗</button></div></div>
    </div>
 </dialog>
-<dialog class="organizer-dialog" id="organizer-dialog" aria-labelledby="organizer-title"><div class="dialog-head"><div><span class="eyebrow">Make it personal</span><h2 id="organizer-title">Guest & event settings</h2></div><button class="close-dialog" id="close-organizer" aria-label="Close settings">×</button></div><div class="dialog-content"><p class="dialog-note">Choose a guest or add their name below. These settings are shared across the three designs in this browser. Sample roles are placeholders.</p><form id="organizer-form">
+<dialog class="organizer-dialog" id="organizer-dialog" aria-labelledby="organizer-title"><div class="dialog-head"><div><span class="eyebrow">Make it personal</span><h2 id="organizer-title">Guest & event settings</h2></div><button class="close-dialog" id="close-organizer" aria-label="Close settings">×</button></div><div class="dialog-content"><p class="dialog-note">Choose a guest or add their name below. Select a guest or add a name manually. Settings and signatures are saved on this device.</p><form id="organizer-form">
 <div class="field"><label for="guest-select">Management member / guest</label><select id="guest-select"><option value="welcome">Our distinguished guest</option><option value="chief">Chief guest — add name</option><option value="management">Management member — add name</option><option value="new">+ Add another guest</option></select></div>
 <div class="two-fields"><div class="field"><label for="guest-name">Full name</label><input id="guest-name" maxlength="80" required placeholder="e.g. Dr. Full Name" autocomplete="off"></div><div class="field"><label for="guest-role">Designation</label><input id="guest-role" maxlength="100" placeholder="e.g. Principal" autocomplete="off"></div></div>
 <details><summary>Edit event details & invitation message</summary><div class="two-fields"><div class="field"><label for="event-date">Date</label><input id="event-date" maxlength="70" placeholder="To be announced"></div><div class="field"><label for="event-time">Time</label><input id="event-time" maxlength="70" placeholder="To be announced"></div></div><div class="field"><label for="event-venue">Venue</label><input id="event-venue" maxlength="140" placeholder="To be announced"></div><div class="field"><label for="event-message">Invitation message</label><textarea id="event-message" maxlength="1000"></textarea></div></details>
@@ -63,9 +64,6 @@ for key,t in themes.items():
 </body></html>'''
     (root/f'{key}.html').write_text(html, encoding='utf-8')
 
-cards = ''
-for key,t in themes.items():
-    cards += f'''<a href="{key}.html" class="design-card"><div class="design-art art-{key}"><span class="design-number">CONCEPT {t['num']}</span><div class="mini-folio" aria-hidden="true"><span class="mini-title">CODEKSHETRA</span><div class="mini-ribbon"></div><span class="mini-seal">OPEN</span><span class="mini-invite">An invitation awaits.</span></div><span class="design-type">{t['type']}</span></div><div class="design-meta"><div><h2>{t['name']}</h2><p>{ {'monochrome':'Quiet confidence. An enduring impression.','aurora':'A little wonder. A world of possibility.','pearl':'Soft light. A thoughtful welcome.'}[key]}</p></div><span class="go-arrow" aria-hidden="true">↗</span></div></a>'''
-(root/'index.html').write_text(f'''<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Three expressions of a memorable welcome. Explore the CODEKSHETRA invitation collection."><title>CODEKSHETRA — The Invitation Collection</title><link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css"><script src="collection.js" defer></script></head><body class="collection"><header class="site-header"><a href="index.html" class="brand"><span class="brand-icon" aria-hidden="true">‹›</span>CODEKSHETRA</a><span class="eyebrow" style="font-size:9px">The invitation collection</span><div class="header-line"></div></header><main class="collection-main"><div class="collection-title"><div><span class="eyebrow">Three expressions. One special occasion.</span><h1>A welcome,<br><em>beautifully made.</em></h1></div><p>Choose your expression. Split the ribbon, unfold your invitation, and leave a mark to remember.</p></div><div class="design-grid">{cards}</div><footer class="collection-foot"><span>Personalized invitations · Ribbon opening · Signature board</span><a href="codekshetra-source.zip" download>Download source & project context ↗</a></footer></main></body></html>''', encoding='utf-8')
+(root/'index.html').write_text(html, encoding='utf-8')
 (root/'favicon.svg').write_text('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="12" fill="#242421"/><path d="m25 19-13 13 13 13m14-26 13 13-13 13" fill="none" stroke="#f2f0e8" stroke-width="3"/></svg>')
-print('Created collection and three invitation pages.')
+print('Created the Aurora invitation and home page.')
